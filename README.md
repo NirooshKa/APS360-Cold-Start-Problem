@@ -25,7 +25,7 @@ Sunday, 5:00PM EST.
 
 ## Project Overview
 
-* *Subject:* * Multiple objects detection in a single image
+*Subject:* Multiple objects detection in a single image
 
 ## Project Management
 
