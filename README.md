@@ -1,5 +1,14 @@
 # APS360-Cold-Start-Problem
 
+## Teammates
+1. Aaron Kammula
+
+2. Chaojian Zhang
+
+3. Jeremy Mainella
+
+4. Jim Li
+
 ## MEETING TIME (WEEKLY)
 
 Sunday, 5:00PM EST. 
@@ -33,5 +42,5 @@ Subject: Multiple objects detection in a single image
 5. ANN for ANN Parameters optimization (hyperparameter optimization)
 6. ANN optimizer (backward pass) using Genetic Algorithm.
 7. Human Face Detection
-8. **Multiple objects detection in a single image**
+8. **Multiple objects detection in a single image** -> Majority chose this
 9. Neural Style Transfer
