@@ -4,6 +4,12 @@
 
 Subject: Multiple objects detection in a single image
 
+## Project Management
+
+1. Use Google Colab for final presentation;
+2. Use python source files for actual code;
+3. Put docx, pdf etc. into Google Drive folder (link: ?)
+
 ## Project Ideas
 
 1. Hand Gesture Recognition (See [Leap Motion](https://www.ultraleap.com/))
