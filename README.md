@@ -10,3 +10,4 @@
 6. ANN optimizer (backward pass) using Genetic Algorithm.
 7. Human Face Detection
 8. Multiple objects detection in a single image
+9. Neural Style Transfer
