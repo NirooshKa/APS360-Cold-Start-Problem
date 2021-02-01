@@ -1,5 +1,9 @@
 # APS360-Cold-Start-Problem
 
+## MEETING TIME (WEEKLY)
+
+Sunday, 5:00PM EST. 
+
 ## Rules
 
 1. **Academic integrity is top priority.** Any cheating/copying will get you kicked out of the group.
@@ -29,5 +33,5 @@ Subject: Multiple objects detection in a single image
 5. ANN for ANN Parameters optimization (hyperparameter optimization)
 6. ANN optimizer (backward pass) using Genetic Algorithm.
 7. Human Face Detection
-**8. Multiple objects detection in a single image** -> Final Decision
+8. **Multiple objects detection in a single image**
 9. Neural Style Transfer
