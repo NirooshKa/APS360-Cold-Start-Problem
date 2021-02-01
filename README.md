@@ -1,5 +1,9 @@
 # APS360-Cold-Start-Problem
 
+## Project Overview
+
+Subject: Multiple objects detection in a single image
+
 ## Project Ideas
 
 1. Hand Gesture Recognition (See [Leap Motion](https://www.ultraleap.com/))
