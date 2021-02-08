@@ -22,6 +22,10 @@ Sunday, 5:00PM EST.
 
 ***Subject:*** Multiple objects detection in a single image
 
+***Application Type***: Traffic sign detection.
+
+***Options***: YOLOV4 for transfer training, which also contains dataset; Also see lecture recording 20210202 on Convolutionary Neural Network.
+
 ## Project Management
 
 1. Use Google Colab for final presentation;
