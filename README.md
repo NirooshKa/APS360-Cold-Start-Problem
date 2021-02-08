@@ -1,12 +1,10 @@
 # APS360-Cold-Start-Problem
 
 ## Teammates
-1. Aaron Kammula
 
+1. Aaron Kammula (team lead)
 2. Chaojian Zhang
-
 3. Jeremy Mainella
-
 4. Jim Li
 
 ## MEETING TIME (WEEKLY)
@@ -16,11 +14,8 @@ Sunday, 5:00PM EST.
 ## Rules
 
 1. **Academic integrity is top priority.** Any cheating/copying will get you kicked out of the group.
-
 2. Use GitHub's "issues" for discussion about the software stuff, and to keep track of progress.
-
 3. Everything should be in the readme file, or this repository, unless if it's a docx file.
-
 4. For source code on GitHub, use .py files. If necessary, we will first start with a Jupyter notebook in the Google drive folder, and then, convert it to .py, and then push to github.  
 
 ## Project Overview
