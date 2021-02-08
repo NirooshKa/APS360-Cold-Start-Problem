@@ -2,7 +2,7 @@
 
 ## Teammates
 
-1. Aaron Kammula (team lead)
+1. Aaron Kammula (Team Leader)
 2. Chaojian Zhang
 3. Jeremy Mainella
 4. Jim Li
