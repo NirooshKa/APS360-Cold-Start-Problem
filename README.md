@@ -44,3 +44,12 @@ Sunday, 5:00PM EST.
 7. Human Face Detection
 8. **Multiple objects detection in a single image** -> Majority chose this
 9. Neural Style Transfer
+
+## References
+
+Some useful resource links:
+
+1. This Github Page: https://github.com/lithiumcomputing/APS360-Cold-Start-Problem
+2. Google Doc for Project Proposal: [here](https://docs.google.com/document/d/14J7TKhRBnlm_moQIZu4q6qHbm-hTBiQYaJL6au6ifSw/edit)
+3. Gooel Drive for Shared Files: [here](https://drive.google.com/drive/folders/1TSqD0ilswiCwoeVSMuOGy675iGxupkve)
+4. Colab file for presentation: pending.
