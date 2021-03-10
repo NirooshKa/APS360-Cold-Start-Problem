@@ -2,3 +2,15 @@ darknet/
 darknet/*
 temp/
 temp/*
+cats/
+cats/*
+flowers/
+flowers/*
+horses/
+horses/*
+cats_and_dogs/
+cats_and_dogs/*
+testenv/
+testenv*/
+.ipynb_checkpoints/
+.ipynb_checkpoints/*
