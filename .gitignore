@@ -11,6 +11,8 @@ horses/*
 cats_and_dogs/
 cats_and_dogs/*
 venv/
-venv*/
+venv/*
 .ipynb_checkpoints/
 .ipynb_checkpoints/*
+tempoutput/
+tempoutput/*
