@@ -74,8 +74,8 @@ def train_net(model, train_data, val_data, batch_size=64, num_epochs=1, learning
 
             #Backwards pass
             loss.backwards()
-            optimizer.step()
             optimizer.zero_grad()
+            optimizer.step()
 
             if n % num_iters == 0:
                 #Train and val loss
