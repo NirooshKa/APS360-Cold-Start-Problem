@@ -18,6 +18,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import matplotlib.pyplot as plt
+import torchvision.models
 
 
 class FCTestNN(nn.Module):
@@ -49,7 +50,7 @@ class ConvTestNN(nn.Module):
         x = x.squeeze(1)
         return x
 
-def train_net(model, train_data, val_data, batch_size=64, num_epochs=1, learning_rate=0.001, momentum=0.9, use_cuda=False, num_iters=10):
+def train_net(model, train_data, val_data, batch_size=64, num_epochs=1, learning_rate=0.001, momentum=0.9, use_cuda=False, num_iters=10, pretrain_net=None):
     #Initialize variables and loss/optim
     start_time = time.time()
     criterion = nn.CrossEntropyLoss()
@@ -69,7 +70,7 @@ def train_net(model, train_data, val_data, batch_size=64, num_epochs=1, learning
                 labels = labels.cuda()
 
             #Forward pass
-            out = model(imgs)
+            out = model(pretrain_net(imgs))
             loss = criterion(out, labels)
 
             #Backwards pass
@@ -111,7 +112,7 @@ def train_net(model, train_data, val_data, batch_size=64, num_epochs=1, learning
     print("Final Validation Accuracy: {0}".format(val_acc[-1]))
     print("The total training time was: {0}".format(end_time - start_time))
 
-def accuracy_net(model, data=None, batch=None, label=None, use_cuda=False):
+def accuracy_net(model, data=None, batch=None, label=None, use_cuda=False, pretrain_net=None):
     correct = 0
     total = 0
 
@@ -124,7 +125,7 @@ def accuracy_net(model, data=None, batch=None, label=None, use_cuda=False):
                 labels = labels.cuda()
 
             #Model evaluation
-            output = model(imgs)
+            output = model(pretrain_net(imgs))
             pred = output.max(1, keepdim=False)[1]
             correct += pred.eq(labels.view_as(pred)).sum().item()
             total += imgs.shape[0]
@@ -138,4 +139,12 @@ def accuracy_net(model, data=None, batch=None, label=None, use_cuda=False):
 
     return correct / total
 
+def alexnet_init(use_cuda=False):
+    alexNet = torchvision.models.alexnet(pretrained=True)
+    Net = alexNet.features
+
+    if use_cuda and torch.cuda.is_available():
+        Net.cuda()
+    
+    return Net
 
