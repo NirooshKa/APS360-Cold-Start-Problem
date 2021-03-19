@@ -50,6 +50,22 @@ class ConvTestNN(nn.Module):
         x = x.squeeze(1)
         return x
 
+class ALFinalClassifier(nn.Module):
+    def __init__(self, class_size):
+        super(ALFinalClassifier, self).__init__()
+        self.name = "ALFinalClassifier"
+        self.fc1 = nn.Linear(256 * 6 * 6, 1024)
+        self.fc2 = nn.Linear(1024, 64)
+        self.fc3 = nn.Linear(64, class_size)
+    
+    def forward(self, x):
+        x = x.view(-1, 256 * 6 * 6) #flatten feature data
+        x = F.relu(self.fc1(x)) #Not sure if ReLu is the best function to use here, but i'll leave it for now
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+
 def train_net(model, train_data, val_data, batch_size=64, num_epochs=1, learning_rate=0.001, momentum=0.9, use_cuda=False, num_iters=10, pretrain_net=None):
     #Initialize variables and loss/optim
     start_time = time.time()
@@ -70,7 +86,7 @@ def train_net(model, train_data, val_data, batch_size=64, num_epochs=1, learning
                 labels = labels.cuda()
 
             #Forward pass
-            out = model(pretrain_net(imgs))
+            out = model(pretrain_net(imgs)) #img size should be 224 * 224 for AlexNet
             loss = criterion(out, labels)
 
             #Backwards pass
