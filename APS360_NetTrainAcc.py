@@ -71,12 +71,70 @@ class ALFinalClassifier(nn.Module):
         x = x.squeeze(1) # Flatten to [batch_size]
         return x
 
+class CPool(nn.Module):
+    def __init__(self, class_size):
+        super(CPool, self).__init__()
+        self.name = "CPool"
+        self.c1 = nn.Conv2d(3, 5, 3)
+        self.c2 = nn.Conv2d(5, 7, 3)
+        self.c3 = nn.Conv2d(7, 10, 3)
+        self.c4 = nn.Conv2d(10, 15, 3)
 
-def train_net(model, train_data, val_data, batch_size=4, num_epochs=1, learning_rate=0.001, momentum=0.9, use_cuda=False, num_iters=10, pretrain_net=None):
+        #self.pool1 = nn.MaxPool2d(2, 2)
+        self.pool2 = nn.MaxPool2d(3, 2)
+        #self.pool3 = nn.MaxPool2d(2, 2)
+        self.pool4 = nn.MaxPool2d(2, 2)
+
+        self.fc1 = nn.Linear(15 * 53 * 53, 1024)
+        self.fc2 = nn.Linear(1024, 64)
+        self.fc3 = nn.Linear(64, class_size)
+    
+    def forward(self, x):
+        x = F.relu(self.c1(x)) #(3, 224, 224) --> (5, 222, 222)
+        x = F.relu(self.pool2(self.c2(x))) #(5, 222, 222) --> (7, 110, 110)
+        x = F.relu(self.c3(x)) #(7, 110, 110) --> (10, 108, 108)
+        x = F.relu(self.pool4(self.c4(x))) #(10, 108, 108) --> (15, 53, 53)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        x = x.squeeze(1)
+        return x
+
+class CStride(nn.Module):
+    def __init__(self, class_size):
+        super(CStride, self).__init__()
+        self.name = "CStride"
+        self.c1 = nn.Conv2d(3, 5, 3, stride=1)
+        self.c2 = nn.Conv2d(5, 7, 4, stride=2)
+        self.c3 = nn.Conv2d(7, 10, 4, stride=2)
+        self.c4 = nn.Conv2d(10, 15, 3, stride=3)
+        self.c5 = nn.Conv2d(15, 20, 3, stride=1)
+        self.c6 = nn.Conv2d(30, 30, 3, stride=1)
+
+        self.fc1 = nn.Linear(30 * 14 * 14, 1024)
+        self.fc2 = nn.Linear(1024, 64)
+        self.fc3 = nn.Linear(64, class_size)
+    
+    def forward(self, x):
+        x = F.relu(self.c1(x)) #(3, 224, 224) --> (5, 222, 222)
+        x = F.relu(self.c2(x)) #(5, 222, 222) --> (7, 110, 110)
+        x = F.relu(self.c3(x)) #(7, 110, 110) --> (10, 54, 54)
+        x = F.relu(self.c4(x)) #(10, 54, 54) --> (15, 18, 18)
+        x = F.relu(self.c5(x)) #(15, 18, 18) --> (20, 16, 16)
+        x = F.relu(self.c6(x)) #(20, 16, 16) --> (30, 14, 14)
+
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        x = x.squeeze(1)
+        return x
+        
+
+def train_net(model, train_data, val_data, batch_size=4, num_epochs=1, learning_rate=0.001, momentum=0.9, use_cuda=False, num_iters=10):
     #Initialize variables and loss/optim
     start_time = time.time()
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     iters, losses, train_acc, val_acc = [], [], [], []
 
@@ -135,7 +193,7 @@ def train_net(model, train_data, val_data, batch_size=4, num_epochs=1, learning_
     print("Final Validation Accuracy: {0}".format(val_acc[-1]))
     print("The total training time was: {0}".format(end_time - start_time))
 
-def accuracy_net(model, data=None, batch=None, label=None, use_cuda=False, pretrain_net=None):
+def accuracy_net(model, data=None, batch=None, label=None, use_cuda=False):
     correct = 0
     total = 0
 
