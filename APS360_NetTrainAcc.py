@@ -18,6 +18,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import matplotlib.pyplot as plt
+import torchvision.models
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 class FCTestNN(nn.Module):
@@ -49,7 +53,26 @@ class ConvTestNN(nn.Module):
         x = x.squeeze(1)
         return x
 
-def train_net(model, train_data, val_data, batch_size=64, num_epochs=1, learning_rate=0.001, momentum=0.9, use_cuda=False, num_iters=10):
+class ALFinalClassifier(nn.Module):
+    def __init__(self, class_size, pretrain_net):
+        super(ALFinalClassifier, self).__init__()
+        self.name = "ALFinalClassifier"
+        self.fc1 = nn.Linear(256 * 6 * 6, 1024)
+        self.fc2 = nn.Linear(1024, 64)
+        self.fc3 = nn.Linear(64, class_size)
+        self.pretrain_net = pretrain_net
+    
+    def forward(self, x):
+        x = self.pretrain_net(x)
+        x = x.view(-1, 256 * 6 * 6) #flatten feature data
+        x = F.relu(self.fc1(x)) #Not sure if ReLu is the best function to use here, but i'll leave it for now
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        x = x.squeeze(1) # Flatten to [batch_size]
+        return x
+
+
+def train_net(model, train_data, val_data, batch_size=4, num_epochs=1, learning_rate=0.001, momentum=0.9, use_cuda=False, num_iters=10, pretrain_net=None):
     #Initialize variables and loss/optim
     start_time = time.time()
     criterion = nn.CrossEntropyLoss()
@@ -69,16 +92,17 @@ def train_net(model, train_data, val_data, batch_size=64, num_epochs=1, learning
                 labels = labels.cuda()
 
             #Forward pass
-            out = model(imgs)
+            out = model(imgs) #img size should be 224 * 224 for AlexNet
             loss = criterion(out, labels)
 
             #Backwards pass
-            loss.backwards()
-            optimizer.step()
+            loss.backward()
             optimizer.zero_grad()
+            optimizer.step()
 
             if n % num_iters == 0:
                 #Train and val loss
+                print(num_iters)
                 iters.append(n)
                 losses.append(float(loss)/batch_size)
 
@@ -111,7 +135,7 @@ def train_net(model, train_data, val_data, batch_size=64, num_epochs=1, learning
     print("Final Validation Accuracy: {0}".format(val_acc[-1]))
     print("The total training time was: {0}".format(end_time - start_time))
 
-def accuracy_net(model, data=None, batch=None, label=None, use_cuda=False):
+def accuracy_net(model, data=None, batch=None, label=None, use_cuda=False, pretrain_net=None):
     correct = 0
     total = 0
 
@@ -134,8 +158,16 @@ def accuracy_net(model, data=None, batch=None, label=None, use_cuda=False):
         output = model(batch)
         pred = output.max(1, keepdim=False)[1]
         correct += pred.eq(label.view_as(pred)).sum().item()
-        total += imgs.shape[0]
+        total += batch.shape[0]
 
     return correct / total
 
+def alexnet_init(use_cuda=False):
+    alexNet = torchvision.models.alexnet(pretrained=True)
+    Net = alexNet.features
+
+    if use_cuda and torch.cuda.is_available():
+        Net.cuda()
+    
+    return Net
 
