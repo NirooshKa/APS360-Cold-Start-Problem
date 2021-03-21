@@ -94,6 +94,7 @@ class CPool(nn.Module):
         x = F.relu(self.pool2(self.c2(x))) #(5, 222, 222) --> (7, 110, 110)
         x = F.relu(self.c3(x)) #(7, 110, 110) --> (10, 108, 108)
         x = F.relu(self.pool4(self.c4(x))) #(10, 108, 108) --> (15, 53, 53)
+        x = x.view(-1, 10 * 108 * 108) #flatten feature data
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
@@ -122,6 +123,8 @@ class CStride(nn.Module):
         x = F.relu(self.c4(x)) #(10, 54, 54) --> (15, 18, 18)
         x = F.relu(self.c5(x)) #(15, 18, 18) --> (20, 16, 16)
         x = F.relu(self.c6(x)) #(20, 16, 16) --> (30, 14, 14)
+
+        x = x.view(-1, 20 * 16 * 16) #flatten feature data
 
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
