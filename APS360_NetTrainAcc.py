@@ -25,11 +25,11 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 
 class FCTestNN(nn.Module):
-    def __init__(self):
+    def __init__(self, class_size):
         super(FCTestNN, self).__init__()
         self.name = "FCTestNN"
         self.fc1 = nn.Linear(3*128*128, 256) #(RGB incoming pixels, arbitrary node number)
-        self.fc2 = nn.Linear(256, 4) #(arbitrary node number, 4 classes (dog, cat, horse, flower))
+        self.fc2 = nn.Linear(256, class_size) #(arbitrary node number, 4 classes (dog, cat, horse, flower))
     
     def forward(self, x):
         x = x.view(-1, 3*128*128)
@@ -39,12 +39,12 @@ class FCTestNN(nn.Module):
         return x
 
 class ConvTestNN(nn.Module):
-    def __init__(self):
+    def __init__(self, class_size):
         super(ConvTestNN, self).__init__()
         self.name = "ConvTestNN"
         self.conv1 = nn.Conv2d(3, 5, 5)
         self.pool = nn.MaxPool2d(2, 2)
-        self.fc1 = nn.Linear(5*62*62, 4)
+        self.fc1 = nn.Linear(5*62*62, class_size)
     
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
