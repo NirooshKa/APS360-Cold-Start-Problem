@@ -9,11 +9,11 @@ if __name__ == "__main__":
     transforms.CenterCrop(224),
     transforms.ToTensor()
     ])
-    batch_size = 16
+    batch_size = 64
 
-    train, val, test, classes = get_data_loader_type("cats", batch_size=batch_size, transformer=preprocess)
+    train, val, test, classes = get_data_loader_type("horses", batch_size=batch_size, transformer=preprocess)
     print(classes)
 
     pretrained = APS360_NetTrainAcc.alexnet_init()
     model = APS360_NetTrainAcc.ALFinalClassifier(len(classes), pretrained)
-    APS360_NetTrainAcc.train_net(model, train, val, batch_size=batch_size, num_epochs=5, pretrain_net=pretrained)
+    APS360_NetTrainAcc.train_net(model, train, val, batch_size=batch_size, num_epochs=5, learning_rate=0.0001)
