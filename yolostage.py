@@ -69,5 +69,7 @@ if __name__ == '__main__':
 
     # Process coordinates
     results = SplitImageParts(targetPath, coordinates)
+    # Crop a square region instead of a rectangular region...
 
     # Downstream process with handle results from here...
+    # Downstram will use transformer to resize to 128x128
