@@ -26,6 +26,8 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
+torch.seed(1) # for reproducibility
+
 class FCTestNN(nn.Module):
     def __init__(self, class_size):
         super(FCTestNN, self).__init__()
@@ -186,6 +188,7 @@ def train_net(model, train_data, val_data, batch_size=4, num_epochs=1, learning_
     plt.plot(iters, losses, label="Train")
     plt.xlabel("Iterations")
     plt.ylabel("Loss")
+    plt.savefig("training_loss.png")
 
     plt.figure(2)
     plt.title("Training and Validation Accuracy")
@@ -194,7 +197,7 @@ def train_net(model, train_data, val_data, batch_size=4, num_epochs=1, learning_
     plt.xlabel("Iterations")
     plt.ylabel("Accuracy")
     plt.legend(loc="best")
-    plt.show()
+    plt.savefig("train_val_acc.png")
 
     print("Final Training Accuracy: {0}".format(train_acc[-1]))
     print("Final Validation Accuracy: {0}".format(val_acc[-1]))
