@@ -1,5 +1,11 @@
 # APS360-Cold-Start-Problem
 
+## Program Usage Notes
+
+1. Python runtime executable name is expectd to be `python3`;
+2. For yolostage script, the first command line argument to file path must be absolute path, consider using (in Bash) `python3 yolostage.py $(pwd)/work/dog.jpg` for relative paths;
+3. All scripts assume running from repository root.
+
 ## Teammates
 
 1. Aaron Kammula (Team Leader)
