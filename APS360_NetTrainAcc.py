@@ -20,9 +20,11 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 import torchvision.models
 import ssl
+import os
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 class FCTestNN(nn.Module):
     def __init__(self, class_size):
@@ -179,12 +181,13 @@ def train_net(model, train_data, val_data, batch_size=4, num_epochs=1, learning_
     end_time = time.time()
 
     #Graph the training data
+    plt.figure(1)
     plt.title("Training Loss")
     plt.plot(iters, losses, label="Train")
     plt.xlabel("Iterations")
     plt.ylabel("Loss")
-    plt.show()
 
+    plt.figure(2)
     plt.title("Training and Validation Accuracy")
     plt.plot(iters, train_acc, label="Train")
     plt.plot(iters, val_acc, label="Validation")
