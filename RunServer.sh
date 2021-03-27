@@ -1,2 +1,2 @@
 cd Server
-dotnet Server/SmartPhoto.dll
+dotnet SmartPhoto.dll
