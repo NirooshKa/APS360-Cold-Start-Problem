@@ -17,3 +17,6 @@ if __name__ == "__main__":
     pretrained = APS360_NetTrainAcc.alexnet_init()
     model = APS360_NetTrainAcc.ALFinalClassifier(len(classes), pretrained)
     APS360_NetTrainAcc.train_net(model, train, val, batch_size=batch_size, num_epochs=5, learning_rate=0.0001)
+
+    # Print Test Accuracy
+    print("Test Accuracy = {:%}".format(APS360_NetTrainAcc.accuracy_net(model, test)))

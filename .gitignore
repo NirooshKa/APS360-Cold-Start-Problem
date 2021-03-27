@@ -16,3 +16,5 @@ venv/*
 .ipynb_checkpoints/*
 tempoutput/
 tempoutput/*
+__pycache__/
+__pycache__/*
