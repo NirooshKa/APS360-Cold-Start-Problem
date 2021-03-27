@@ -1,2 +1,2 @@
-PythonPath: C:\Windows\System32\PING.EXE
-PythonCommands: [google.com]
+PythonPath: python3
+PythonCommands: [/work/aps360/yolostage.py]
