@@ -60,11 +60,13 @@ def ProcessImage(targetPath):
     return SplitImageParts(targetPath, coordinates)
 
 if __name__ == '__main__':
+    # Default test path
     filename = 'data/dog.jpg'
-    if len(sys.argv) == 2:
-        filename = sys.argv[1]
-    # Run the detector
     targetPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'darknet', filename)
+    # Use path from command line argument
+    if len(sys.argv) == 2:
+        targetPath = sys.argv[1]
+    # Run the detector
     print(f'Executing YOLO detector on: {targetPath}')
     coordinates = DetectObjectsOnImage(targetPath)
     print(f'Result:')
