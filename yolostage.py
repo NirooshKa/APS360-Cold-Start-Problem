@@ -46,8 +46,8 @@ def SplitImageParts(sourceImage, coordinates):
         crop = img[y:y+height, x:x+width, 0:3]
         parts.append(crop)
         # Temp: Save as output
-        Path('tempoutput').mkdir(parents=False, exist_ok=True)
-        plt.imsave(os.path.join('testoutput', c['label'] + '.png'), crop)
+        Path('work').mkdir(parents=False, exist_ok=True)
+        plt.imsave(os.path.join('work', c['label'] + '.png'), crop)
     return parts
 
 def ProcessImage(targetPath):
