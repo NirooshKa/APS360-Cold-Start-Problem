@@ -16,3 +16,6 @@ wget https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optim
 # Download datasets
 cd ../
 # ./download.sh
+
+# Install additional python dependencies
+pip install matplotlib
