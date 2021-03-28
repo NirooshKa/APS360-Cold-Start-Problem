@@ -1,2 +1,2 @@
-PythonPath: python3
-PythonCommands: [/work/aps360/yolostage.py]
+PythonPath: /usr/bin/python3
+PythonCommands: ["/root/APS360-Cold-Start-Problem/yolostage.py", "work/work.png"]
