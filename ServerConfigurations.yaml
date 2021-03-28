@@ -1,2 +1,2 @@
 PythonPath: /usr/bin/python3
-PythonCommands: ["/root/APS360-Cold-Start-Problem/yolostage.py", "work/work.png"]
+PythonCommands: ["/root/APS360-Cold-Start-Problem/yolostage.py", "/root/APS360-Cold-Start-Problem/work/work.png"]
