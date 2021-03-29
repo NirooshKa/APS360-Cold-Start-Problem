@@ -2,6 +2,7 @@ import subprocess
 import os
 import ntpath
 import re
+import sys
 import matplotlib.pyplot as plt
 from pathlib import Path
 
@@ -45,8 +46,8 @@ def SplitImageParts(sourceImage, coordinates):
         crop = img[y:y+height, x:x+width, 0:3]
         parts.append(crop)
         # Temp: Save as output
-        Path('tempoutput').mkdir(parents=False, exist_ok=True)
-        plt.imsave(os.path.join('testoutput', c['label'] + '.png'), crop)
+        Path('work').mkdir(parents=False, exist_ok=True)
+        plt.imsave(os.path.join('work', c['label'] + '.png'), crop)
     return parts
 
 def ProcessImage(targetPath):
@@ -59,8 +60,13 @@ def ProcessImage(targetPath):
     return SplitImageParts(targetPath, coordinates)
 
 if __name__ == '__main__':
+    # Default test path
+    filename = 'data/dog.jpg'
+    targetPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'darknet', filename)
+    # Use path from command line argument
+    if len(sys.argv) == 2:
+        targetPath = sys.argv[1]
     # Run the detector
-    targetPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'darknet', 'data/dog.jpg')
     print(f'Executing YOLO detector on: {targetPath}')
     coordinates = DetectObjectsOnImage(targetPath)
     print(f'Result:')

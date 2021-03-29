@@ -1,0 +1,189 @@
+﻿@page "/"
+
+<h1 class="text-center">Smart Photo</h1>
+
+<h3 class="text-center">How it works</h3>
+
+<p class="text-center">The program will detect the various objects present in a photo.</p>
+
+<ul class="text-center">
+    <li class="text-center">Upload your photo.</li>
+    <li class="text-center">The network runs its magic.</li>
+    <li class="text-center">Various objects are identified.</li>
+</ul>
+
+<img src="/images/architecture.png" class="mx-auto d-block" />
+
+<p class="text-center">In particular, the following four kinds of animals are further identified for their species: 1) Cats, 2) Dogs, 3) Horses, 4) Flowers.</p>
+
+<h3 class="text-center">Start</h3>
+
+@if (!Directory.Exists(workPath) || process != null)
+{
+    <p class="text-center">Select a photo to start detecting objects in it.</p>
+}
+else
+{
+    <p class="text-center"><strong>Someone is working with this site right now!</strong> Due to limited processing resource. Only one person can use this app at a time. Please come back later!</p>
+}
+
+
+@if (process == null)
+{
+    @if (file != null)
+    {
+        if (file.Type == "image/jpeg" || file.Type == "image/png")
+        {
+            <div>
+                <p>Name: @file.Name</p>
+                <p>Size in bytes: @file.Size</p>
+                <p>Last modified date: @file.LastModified.ToShortDateString()</p>
+                <p>Content type: @file.Type</p>
+                <button @onclick="Save">Upload</button>
+            </div>
+        }
+        else
+        {
+            <div>
+                <p>Name: @file.Name</p>
+                <p>Size in bytes: @file.Size</p>
+                <p>Last modified date: @file.LastModified.ToShortDateString()</p>
+                <p>Content type: @file.Type</p>
+                <p><strong>Wrong file type. Accepts only <code>image/png</code> or <code>image/jpg</code>.</strong></p>
+            </div>
+        }
+    }
+
+    if (!Directory.Exists(workPath))
+    {
+        <div class="drag-drop-zone">
+            <BlazorInputFile.InputFile OnChange="HandleFileSelected" />
+            @status
+        </div>
+    }
+}
+else
+{
+    <pre style="white-space: pre-wrap;">
+        @process
+    </pre>
+}
+
+@if (items != null)
+{
+    foreach (var item in items)
+    {
+        @if (records.ContainsKey(item.Name))
+        {
+            <BSCard>
+                <BSCard CardType="CardType.Header">@records[item.Name].Type</BSCard>
+                <BSCard CardType="CardType.Body">
+                    <BSCard CardType="CardType.Title">@item.Name</BSCard>
+                    <img src="temp/@Path.GetFileName(item.FilePath)" />
+                    <BSCard CardType="CardType.Text">@records[item.Name].Summary</BSCard>
+                </BSCard>
+            </BSCard>
+        }
+        else
+        {
+            <p>@item.Name is also detected (but we don't care). </p>
+        }
+    }
+}
+
+@code {
+    const string DefaultStatus = "Drop an image file here to view it, or click to choose a file";
+    IFileListEntry file;
+    string status = DefaultStatus;
+    string process = null;
+    string TaskItem = null;
+    string rootPath = null;
+    string workPath = null;
+    (string FilePath, string Name)[] items = null;
+    Dictionary<string, Kind> records = null;
+
+    void HandleFileSelected(IFileListEntry[] files)
+    {
+        // Do something with the files, e.g., read them
+        file = files.FirstOrDefault();
+    }
+
+    protected override void OnInitialized()
+    {
+        rootPath = Path.GetDirectoryName(Directory.GetCurrentDirectory());
+        workPath = Path.Combine(rootPath, "work");
+    }
+
+    async Task Save()
+    {
+        using (System.IO.MemoryStream memory = new System.IO.MemoryStream())
+        {
+            await file.Data.CopyToAsync(memory);
+            if (!Directory.Exists(workPath))
+                Directory.CreateDirectory(workPath);
+            Directory.GetFiles(workPath).ToList().ForEach(f => File.Delete(f));
+            TaskItem = System.IO.Path.Combine(workPath, $"work.png");
+            using (var fileStream = System.IO.File.Create(TaskItem))
+            {
+                memory.Seek(0, System.IO.SeekOrigin.Begin);
+                memory.CopyTo(fileStream);
+            }
+        }
+        process = "Start processing...";
+        await YoloStage();
+    }
+
+    async Task YoloStage()
+    {
+        if (TaskItem != null)
+        {
+            RunConfiguration configuration = new YamlDotNet.Serialization.Deserializer().Deserialize<RunConfiguration>(File.ReadAllText(Path.Combine(rootPath, "ServerConfigurations.yaml")));
+            string scriptPath = System.IO.Path.Combine(rootPath, "yolostage.py");
+            if (!System.IO.File.Exists(scriptPath))
+            {
+                process += "\n" + $"Couldn't locate yolostage.py. Current environment path is: {System.IO.Directory.GetCurrentDirectory()}, expect yolostage.py at: {scriptPath}";
+                return;
+            }
+            StateHasChanged();
+            var command = Medallion.Shell.Command.Run(configuration.PythonPath, configuration.PythonCommands, options =>
+            {
+                options.WorkingDirectory(rootPath);
+                options.StartInfo(si => { si.UseShellExecute = false; si.RedirectStandardInput = si.RedirectStandardOutput = si.RedirectStandardError = true; });
+            });  // Example: Medallion.Shell.Command.Run("python3", scriptPath, TaskItem);
+            var result = await command.Task;
+            // inspect the result
+            if (!result.Success)
+            {
+                process += "\n" + $"command failed with exit code {result.ExitCode}: {result.StandardError}";
+            }
+            else
+            {
+                process += "\n" + result.StandardOutput;
+
+                TextInfo TI = new CultureInfo("en-US", false).TextInfo;
+                // Get files
+                items = Directory.GetFiles(workPath).Where(f => Path.GetFileName(f) != "work.png").Select(f => (FilePath: f, Name: TI.ToTitleCase(Path.GetFileNameWithoutExtension(f)))).ToArray();
+                // Copy files into wwwroot
+                string tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "temp");
+                if (Directory.Exists(tempFolder))
+                    Directory.Delete(tempFolder, true);
+                Directory.CreateDirectory(tempFolder);
+                items.ToList().ForEach(f =>
+                {
+                    string newPath = Path.Combine(tempFolder, Path.GetFileName(f.FilePath));
+                    File.Copy(f.FilePath, newPath);
+                });
+                // Get dictionary
+                string csvFile = Path.Combine(rootPath, "dataset.csv");
+                var conf = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture);
+                using (var reader = new StreamReader(csvFile))
+                using (var csv = new CsvHelper.CsvReader(reader, conf))
+                {
+                    records = csv.GetRecords<Kind>().ToDictionary(i => i.Species, i => i);
+                }
+            }
+            // Delete holding
+            Directory.Delete(workPath, true);
+        }
+    }
+}

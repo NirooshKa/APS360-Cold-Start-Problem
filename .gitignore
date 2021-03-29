@@ -20,3 +20,8 @@ __pycache__/
 __pycache__/*
 train_val_acc.png
 training_loss.png
+work/
+work/*
+Server.zip
+Server/
+Server/*
