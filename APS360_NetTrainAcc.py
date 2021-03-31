@@ -135,7 +135,7 @@ class CStride(nn.Module):
         return x
         
 
-def train_net(model, train_data, val_data, batch_size=4, num_epochs=1, learning_rate=0.001, momentum=0.9, use_cuda=False, num_iters=10):
+def train_net(model, train_data, val_data, batch_size=4, num_epochs=1, learning_rate=0.001, momentum=0.9, use_cuda=False, num_iters=10, subject='default'):
     #Initialize variables and loss/optim
     start_time = time.time()
     criterion = nn.CrossEntropyLoss()
@@ -185,7 +185,7 @@ def train_net(model, train_data, val_data, batch_size=4, num_epochs=1, learning_
     plt.plot(iters, losses, label="Train")
     plt.xlabel("Iterations")
     plt.ylabel("Loss")
-    plt.savefig("training_loss.png")
+    plt.savefig(f'training_loss_{subject}.png')
 
     plt.figure(2)
     plt.title("Training and Validation Accuracy")
@@ -194,7 +194,7 @@ def train_net(model, train_data, val_data, batch_size=4, num_epochs=1, learning_
     plt.xlabel("Iterations")
     plt.ylabel("Accuracy")
     plt.legend(loc="best")
-    plt.savefig("train_val_acc.png")
+    plt.savefig(f'train_val_acc_{subject}.png')
 
     print("Final Training Accuracy: {0}".format(train_acc[-1]))
     print("Final Validation Accuracy: {0}".format(val_acc[-1]))
