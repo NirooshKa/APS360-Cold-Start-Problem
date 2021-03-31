@@ -1,6 +1,6 @@
 import subprocess
 import os
-import ntpath
+import ntpath # Useful for things like filename = ntpath.basename(targetPath) # Not used
 import re
 import sys
 import matplotlib.pyplot as plt
@@ -11,13 +11,14 @@ def DetectObjectsOnImage(targetPath):
         - Pending exception handling
     """
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'darknet')
-    process = subprocess.run("./darknet detector test cfg/coco.data yolov4.cfg yolov4.weights -ext_output " + f'"{targetPath}"', shell=True, capture_output=True, cwd=path)
+    process = subprocess.run("./darknet detector test cfg/coco.data yolov4.cfg yolov4.weights -ext_output " + f'"{targetPath}" > "{targetPath}.txt" 2>&1', shell=True, capture_output=True, cwd=path)
 
-    # Get the result
-    filename = ntpath.basename(targetPath) # Not used
     reg = targetPath.replace('\\', '\\\\').replace('/', '\/').replace('.', '\\.') + r': Predicted .*'
     pattern = re.compile(reg, re.MULTILINE | re.DOTALL)
-    result = pattern.search(process.stdout.decode('ascii').strip()).group()
+    # Read result
+    with open(f'{targetPath}.txt', 'r') as content_file:
+        content = content_file.read()
+    result = pattern.search(content.decode('ascii').strip()).group() # Use instead process.stdout to avoid potential incomplete information issue
     # print(result) # Debug use
 
     # Parse result
