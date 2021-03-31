@@ -29,7 +29,7 @@ def DetectObjectsOnImage(targetPath):
         # Get coordinates of matched results
         else:
             match = re.search(r'(?P<label>[^:]+): (?P<confidence>\d+)%\s*\((?P<coord>.*?)\)', line)
-            coord_string = re.search(r'left_x:\s+(?P<x>\d+)\s+top_y:\s+(?P<y>\d+)\s+width:\s+(?P<w>\d+)\s+height:\s+(?P<h>\d+)\s*', match.group('coord'))
+            coord_string = re.search(r'left_x:\s+(?P<x>-?\d+)\s+top_y:\s+(?P<y>-?\d+)\s+width:\s+(?P<w>-?\d+)\s+height:\s+(?P<h>-?\d+)\s*', match.group('coord'))
             x,y,w,h = int(coord_string.group('x')), int(coord_string.group('y')), int(coord_string.group('w')), int(coord_string.group('h'))
             coordinates.append({"label": match.group('label'), "confidence": float(match.group('confidence')), "x": x, "y": y, "width": w, "height": h})
     return coordinates
