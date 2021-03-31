@@ -25,10 +25,11 @@ def detect_using_model(subject, source_image):
 
     pretrained = APS360_NetTrainAcc.alexnet_init()
     model = APS360_NetTrainAcc.ALFinalClassifier(classes[subject], pretrained)
-    model.load_state_dict(torch.load(weights[subject]))
+    model.load_state_dict(torch.load(weights[subject], map_location=torch.device('cpu')))
     model.eval()
 
     image = preprocess(Image.open(source_image))
+    image = image[:3,:,:] # Remove potential alpha channel
     batch = torch.unsqueeze(image, 0) # Manual batching
     out = model(batch)
     _, index = torch.max(out, 1)
