@@ -25,19 +25,6 @@ def train_once(subject, use_cuda=False):
         model.cuda()
     APS360_NetTrainAcc.train_net(model, train, val, batch_size=batch_size, num_epochs=25, learning_rate=0.0001, use_cuda=use_cuda, subject=subject)
 
-    best_test_acc = -1
-    best_lr = 0.0001
-    for lr in np.arange(0.0001, 0.0010, 0.00005):
-        print("Testing Learning Rate: {}".format(lr))
-        APS360_NetTrainAcc.train_net(model, train, val, batch_size=batch_size, num_epochs=10, learning_rate=lr)
-        test_acc = APS360_NetTrainAcc.accuracy_net(model, test)
-        
-        # Print Test Accuracy
-        print("Test Accuracy = {:%}".format(test_acc))
-
-        if test_acc > best_test_acc:
-            best_test_acc = test_acc
-            best_lr = lr
     # Print Test Accuracy
     print("Test Accuracy = {:%}".format(APS360_NetTrainAcc.accuracy_net(model, test, use_cuda=use_cuda)))
     
