@@ -12,7 +12,7 @@
     <li class="text-center">Various objects are identified.</li>
 </ul>
 
-<img src="/images/architecture.png" class="mx-auto d-block" />
+<img src="/images/architecture.png" class="mx-auto d-block img-fluid" />
 
 <p class="text-center">In particular, the following four kinds of animals are further identified for their species: 1) Cats, 2) Dogs, 3) Horses, 4) Flowers.</p>
 
@@ -123,13 +123,13 @@ else
                 Directory.CreateDirectory(workPath);
             Directory.GetFiles(workPath).ToList().ForEach(f => File.Delete(f));
             TaskItem = System.IO.Path.Combine(workPath, $"work.png");
-            using (var fileStream = System.IO.File.Create(TaskItem))
-            {
-                memory.Seek(0, System.IO.SeekOrigin.Begin);
-                memory.CopyTo(fileStream);
-            }
+            // Read as Bitmap
+            memory.Seek(0, System.IO.SeekOrigin.Begin);
+            System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(memory);
+            bitmap.Save(TaskItem);
         }
         process = "Start processing...";
+        StateHasChanged();
         await YoloStage();
     }
 
@@ -144,7 +144,6 @@ else
                 process += "\n" + $"Couldn't locate yolostage.py. Current environment path is: {System.IO.Directory.GetCurrentDirectory()}, expect yolostage.py at: {scriptPath}";
                 return;
             }
-            StateHasChanged();
             var command = Medallion.Shell.Command.Run(configuration.PythonPath, configuration.PythonCommands, options =>
             {
                 options.WorkingDirectory(rootPath);
