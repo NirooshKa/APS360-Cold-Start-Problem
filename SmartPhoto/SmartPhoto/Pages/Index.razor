@@ -79,14 +79,15 @@ else
                 <BSCard CardType="CardType.Header">@records[item.Name].Type</BSCard>
                 <BSCard CardType="CardType.Body">
                     <BSCard CardType="CardType.Title">@item.Name</BSCard>
-                    <img src="temp/@Path.GetFileName(item.FilePath)" />
+                    <img class="img-fluid" src="temp/@Path.GetFileName(item.FilePath)" />
                     <BSCard CardType="CardType.Text">@records[item.Name].Summary</BSCard>
                 </BSCard>
             </BSCard>
         }
         else
         {
-            <p>@item.Name is also detected (but we don't care). </p>
+            <img class="img-fluid" src="temp/@Path.GetFileName(item.FilePath)" />
+            <p>@item.Name is detected (but we don't have a dictionary item for it). </p>
         }
     }
 }
@@ -126,14 +127,67 @@ else
             // Read as Bitmap
             memory.Seek(0, System.IO.SeekOrigin.Begin);
             System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(memory);
-            bitmap.Save(TaskItem);
+            bitmap.Save(TaskItem, System.Drawing.Imaging.ImageFormat.Png);
         }
         process = "Start processing...";
         StateHasChanged();
-        await YoloStage();
+        // Perform identifications
+        bool result = await YoloStage();
+        if(result)
+        {
+            TextInfo TI = new CultureInfo("en-US", false).TextInfo;
+            // Get files
+            items = Directory.GetFiles(workPath).Where(f => Path.GetFileName(f) != "work.png").Select(f => (FilePath: f, Name: TI.ToTitleCase(Path.GetFileNameWithoutExtension(f)))).ToArray();
+            // Copy files into wwwroot
+            string tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "temp");
+            if (Directory.Exists(tempFolder))
+                Directory.Delete(tempFolder, true);
+            Directory.CreateDirectory(tempFolder);
+            items.ToList().ForEach(f =>
+            {
+                string newPath = Path.Combine(tempFolder, Path.GetFileName(f.FilePath));
+                File.Copy(f.FilePath, newPath);
+            });
+
+            // Perform further identifications
+            for (int i = 0; i < items.Length; i++)
+            {
+                var item = items[i];
+                string[] objects = new string[] { "cat", "dog", "horse", "flower" };
+                if (objects.Contains(item.Name.ToLower()))
+                {
+                    Dictionary<string, string> subjects = new Dictionary<string, string>()
+                    {
+                        { "cat", "cats" },
+                        { "dog", "cats_and_dogs" },
+                        { "horse", "horses" },
+                        { "flower", "flowers" }
+                    };
+                    string identification = await ANNStage(subjects[item.Name.ToLower()], item.FilePath);
+                    if (identification != null)
+                    {
+                        items[i].Name = identification;
+                    }
+                }
+            }
+        }
+        // Update edictionary
+        if(result)
+        {
+            // Get dictionary
+            string csvFile = Path.Combine(rootPath, "dataset.csv");
+            var conf = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture);
+            using (var reader = new StreamReader(csvFile))
+            using (var csv = new CsvHelper.CsvReader(reader, conf))
+            {
+                records = csv.GetRecords<Kind>().ToDictionary(i => i.Species, i => i);
+            }
+        }
+        // Delete holding
+        Directory.Delete(workPath, true);
     }
 
-    async Task YoloStage()
+    async Task<bool> YoloStage()
     {
         if (TaskItem != null)
         {
@@ -142,7 +196,7 @@ else
             if (!System.IO.File.Exists(scriptPath))
             {
                 process += "\n" + $"Couldn't locate yolostage.py. Current environment path is: {System.IO.Directory.GetCurrentDirectory()}, expect yolostage.py at: {scriptPath}";
-                return;
+                return false;
             }
             var command = Medallion.Shell.Command.Run(configuration.PythonPath, configuration.PythonCommands, options =>
             {
@@ -154,35 +208,46 @@ else
             if (!result.Success)
             {
                 process += "\n" + $"command failed with exit code {result.ExitCode}: {result.StandardError}";
+                return false;
             }
             else
             {
                 process += "\n" + result.StandardOutput;
-
-                TextInfo TI = new CultureInfo("en-US", false).TextInfo;
-                // Get files
-                items = Directory.GetFiles(workPath).Where(f => Path.GetFileName(f) != "work.png").Select(f => (FilePath: f, Name: TI.ToTitleCase(Path.GetFileNameWithoutExtension(f)))).ToArray();
-                // Copy files into wwwroot
-                string tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "temp");
-                if (Directory.Exists(tempFolder))
-                    Directory.Delete(tempFolder, true);
-                Directory.CreateDirectory(tempFolder);
-                items.ToList().ForEach(f =>
-                {
-                    string newPath = Path.Combine(tempFolder, Path.GetFileName(f.FilePath));
-                    File.Copy(f.FilePath, newPath);
-                });
-                // Get dictionary
-                string csvFile = Path.Combine(rootPath, "dataset.csv");
-                var conf = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture);
-                using (var reader = new StreamReader(csvFile))
-                using (var csv = new CsvHelper.CsvReader(reader, conf))
-                {
-                    records = csv.GetRecords<Kind>().ToDictionary(i => i.Species, i => i);
-                }
+                return true;
             }
-            // Delete holding
-            Directory.Delete(workPath, true);
         }
+        return false;
+    }
+
+    async Task<string> ANNStage(string subject, string imagePath)
+    {
+        if (TaskItem != null)
+        {
+            RunConfiguration configuration = new YamlDotNet.Serialization.Deserializer().Deserialize<RunConfiguration>(File.ReadAllText(Path.Combine(rootPath, "ServerConfigurations.yaml")));
+            string scriptPath = System.IO.Path.Combine(rootPath, "annstage.py");
+            if (!System.IO.File.Exists(scriptPath))
+            {
+                process += "\n" + $"Couldn't locate annstage.py. Current environment path is: {System.IO.Directory.GetCurrentDirectory()}, expect annstage.py at: {scriptPath}";
+                return null;
+            }
+            var command = Medallion.Shell.Command.Run(configuration.PythonPath, new string[] { scriptPath, subject, imagePath }, options =>
+            {
+                options.WorkingDirectory(rootPath);
+                options.StartInfo(si => { si.UseShellExecute = false; si.RedirectStandardInput = si.RedirectStandardOutput = si.RedirectStandardError = true; });
+            });  // Example: Medallion.Shell.Command.Run("python3", annstage.py, "cats", "work/cat.jpg");
+            var result = await command.Task;
+            // inspect the result
+            if (!result.Success)
+            {
+                process += "\n" + $"command failed with exit code {result.ExitCode}: {result.StandardError}";
+                return null;
+            }
+            else
+            {
+                process += "\n" + result.StandardOutput;
+                return result.StandardOutput;
+            }
+        }
+        return null;
     }
 }
