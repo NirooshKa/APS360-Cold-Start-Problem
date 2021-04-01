@@ -18,6 +18,10 @@ def train_once(subject, use_cuda=False):
     train, val, test, classes = get_data_loader_type(subject, batch_size=batch_size, num_workers=8, transformer=preprocess)
     print(subject)
     print(classes)
+    text_file = open(f"{subject}_classes.txt", "w")
+    for c in classes:
+        text_file.write("%s\n" % c)
+    text_file.close()
 
     pretrained = APS360_NetTrainAcc.alexnet_init(use_cuda=use_cuda)
     model = APS360_NetTrainAcc.ALFinalClassifier(len(classes), pretrained)
