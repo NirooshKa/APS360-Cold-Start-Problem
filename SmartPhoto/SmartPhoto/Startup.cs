@@ -28,6 +28,7 @@ namespace SmartPhoto
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
+            services.AddSingleton<QuoteService>();
             services.AddBootstrapCss();
         }
 

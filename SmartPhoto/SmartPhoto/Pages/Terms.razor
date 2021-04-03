@@ -1,0 +1,33 @@
+﻿@page "/Terms"
+<!--Title-->
+<h1 class="text-center">Terms</h1>
+
+<p>Below list shows all recognized terms in current application.</p>
+
+<!--Terms-->
+<ul>
+    @foreach (var item in records)
+    {
+        <li>@item.Key: @item.Value.Type, @item.Value.Species, @item.Value.Summary</li>
+    }
+</ul>
+
+@code {
+    string rootPath = null;
+    Dictionary<string, Kind> records = null;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        // Get dictionary
+        rootPath = Path.GetDirectoryName(Directory.GetCurrentDirectory());
+        string csvFile = Path.Combine(rootPath, "dataset.csv");
+        var conf = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture);
+        using (var reader = new StreamReader(csvFile))
+        using (var csv = new CsvHelper.CsvReader(reader, conf))
+        {
+            records = csv.GetRecords<Kind>().ToDictionary(i => i.Species, i => i);
+        }
+    }
+}

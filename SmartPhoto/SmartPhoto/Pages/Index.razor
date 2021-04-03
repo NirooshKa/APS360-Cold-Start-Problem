@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inject NavigationManager uriHelper
+@inject QuoteService quote
 <!--Title-->
 <h1 class="text-center">Smart Photo</h1>
 
@@ -66,13 +67,13 @@ else
     {
         @if (records.ContainsKey(item.Name))
         {
-            <BSCard>
+            <BSCard Color="Color.Info" Class="m-2">
                 <BSCard CardType="CardType.Header">@records[item.Name].Type</BSCard>
                 <BSCard CardType="CardType.Body">
                     <BSCard CardType="CardType.Title">@item.Name</BSCard>
                     <BSCard CardType="CardType.Text">
                         <div class="clearfix">
-                            <img class="img-fluid float-left mr-2" src="temp/@Path.GetFileName(item.FilePath)" />
+                            <img class="img-fluid float-left mr-2" style="max-height: 200px;" src="temp/@Path.GetFileName(item.FilePath)" />
                             @records[item.Name].Summary
                         </div>
                     </BSCard>
@@ -81,13 +82,13 @@ else
         }
         else
         {
-            <BSCard>
+            <BSCard Color="Color.Info" Class="m-2">
                 <BSCard CardType="CardType.Header">General</BSCard>
                 <BSCard CardType="CardType.Body">
                     <BSCard CardType="CardType.Title">@item.Name</BSCard>
                     <BSCard CardType="CardType.Text">
                         <div class="clearfix">
-                            <img class="img-fluid float-left mr-2" src="temp/@Path.GetFileName(item.FilePath)" />
+                            <img class="img-fluid float-left mr-2" style="max-height: 200px;" src="temp/@Path.GetFileName(item.FilePath)" />
                             <p>@item.Name is detected (but we don't have a dictionary item for it). </p>
                         </div>
                     </BSCard>
@@ -96,7 +97,24 @@ else
         }
     }
 
+    @*
+    <p>Debug for items: </p>
+    <ul>
+        @foreach (var item in items)
+        {
+            <li>@item.Name: @item.FilePath</li>
+        }
+    </ul>
+    <p></p>
+    <ul>
+        @foreach (var item in records)
+        {
+            <li>@item.Key: @item.Value.Type, @item.Value.Species, @item.Value.Summary</li>
+        }
+    </ul>
+
     <BSButton Color="Color.Primary" @onclick="() => uriHelper.NavigateTo(uriHelper.Uri, forceLoad: true)">Do It Again!</BSButton>
+    *@
 }
 
 @code {
@@ -106,7 +124,6 @@ else
     string process = null;
     string TaskItem = null;
     string rootPath = null;
-    string quote = null;
     string workPath = null;
     (string FilePath, string Name)[] items = null;
     Dictionary<string, Kind> records = null;
@@ -128,7 +145,8 @@ else
         if (result.IsSuccessStatusCode)
         {
             string content = await result.Content.ReadAsStringAsync();
-            quote = System.Text.RegularExpressions.Regex.Match(content, "\"quote\": \"(.*)?\"").Groups[1].Value;
+            quote.Quote = System.Text.RegularExpressions.Regex.Match(content, "\"quote\": \"(.*)?\"").Groups[1].Value;
+            quote.Author = System.Text.RegularExpressions.Regex.Match(content, "\"author\": \"(.*)?\"").Groups[1].Value;
         }
     }
 
@@ -147,8 +165,8 @@ else
             bitmap.Save(TaskItem, System.Drawing.Imaging.ImageFormat.Png);
         }
         process = "Start processing (This may take a LONG while)...";
-        if (quote != null)
-            process += $" In the mean time, did you know that: {quote}";
+        if (quote != null && quote.Quote != null)
+            process += $" In the mean time, did you know that: {quote.Quote} - {quote.Author}";
         StateHasChanged();
         // Perform Object Detection
         bool result = await YoloStage();
@@ -165,8 +183,8 @@ else
                 {
                     string filePath = f;
                     string name = TI.ToTitleCase(Path.GetFileNameWithoutExtension(f));  // Normalize Display
-                name = name.Substring(0, name.LastIndexOf('_')); // Remove numerical index
-                return (FilePath: filePath, Name: name);
+                    name = name.Substring(0, name.LastIndexOf('_')); // Remove numerical index
+                    return (FilePath: filePath, Name: name);
                 }).ToArray();
             // Copy files into wwwroot
             string tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "temp");
@@ -195,7 +213,7 @@ else
             // Perform further identifications
             string[] yoloObjects = new string[] { "cat", "dog", "horse", "flower", "pottedplant" };
             Dictionary<string, string> annSubjects = new Dictionary<string, string>()
-    {
+{
                 { "cat", "cats_and_dogs" }, // "cats" weight is not ready yet, use cats_and_dogs for now
                 { "dog", "cats_and_dogs" },
                 { "horse", "horses" },
@@ -278,7 +296,7 @@ else
             else
             {
                 process += "\n" + result.StandardOutput;
-                return result.StandardOutput;
+                return result.StandardOutput.Trim();
             }
         }
         return null;
