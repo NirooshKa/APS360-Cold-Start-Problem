@@ -1,4 +1,5 @@
 ﻿@page "/"
+@inject NavigationManager uriHelper
 <!--Title-->
 <h1 class="text-center">Smart Photo</h1>
 
@@ -27,7 +28,7 @@ else
                 <p>Size in bytes: @file.Size</p>
                 <p>Last modified date: @file.LastModified.ToShortDateString()</p>
                 <p>Content type: @file.Type</p>
-                <button @onclick="Save">Upload</button>
+                <BSButton Color="Color.Success" @onclick="Save">Upload</BSButton>
             </div>
         }
         else
@@ -94,6 +95,8 @@ else
             </BSCard>
         }
     }
+
+    <BSButton Color="Color.Primary" @onclick="() => uriHelper.NavigateTo(uriHelper.Uri, forceLoad: true)">Do It Again!</BSButton>
 }
 
 @code {
@@ -143,7 +146,7 @@ else
             System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(memory);
             bitmap.Save(TaskItem, System.Drawing.Imaging.ImageFormat.Png);
         }
-        process = "Start processing (This may took a LONG while)...";
+        process = "Start processing (This may take a LONG while)...";
         if (quote != null)
             process += $" In the mean time, did you know that: {quote}";
         StateHasChanged();
@@ -157,9 +160,14 @@ else
             TextInfo TI = new CultureInfo("en-US", false).TextInfo;
             // Get files
             items = Directory.GetFiles(workPath)
-                .Where(f => Path.GetFileName(f).ToLower() != "work.png")
-                .Select(f => (FilePath: f, Name: TI.ToTitleCase(Path.GetFileNameWithoutExtension(f)))).ToArray();
-            items.Select(i => i.Name = i.Name.Substring(0, i.Name.LastIndexOf('_'))).ToArray(); // Remove index
+                .Where(f => !Path.GetFileName(f).ToLower().StartsWith("work"))
+                .Select(f =>
+                {
+                    string filePath = f;
+                    string name = TI.ToTitleCase(Path.GetFileNameWithoutExtension(f));  // Normalize Display
+                name = name.Substring(0, name.LastIndexOf('_')); // Remove numerical index
+                return (FilePath: filePath, Name: name);
+                }).ToArray();
             // Copy files into wwwroot
             string tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "temp");
             if (Directory.Exists(tempFolder))
@@ -170,7 +178,7 @@ else
                 string newPath = Path.Combine(tempFolder, Path.GetFileName(f.FilePath));
                 File.Copy(f.FilePath, newPath);
             });
-            // Update edictionary
+            // Update dictionary
             if (result)
             {
                 // Get dictionary
@@ -187,7 +195,7 @@ else
             // Perform further identifications
             string[] yoloObjects = new string[] { "cat", "dog", "horse", "flower", "pottedplant" };
             Dictionary<string, string> annSubjects = new Dictionary<string, string>()
-            {
+    {
                 { "cat", "cats_and_dogs" }, // "cats" weight is not ready yet, use cats_and_dogs for now
                 { "dog", "cats_and_dogs" },
                 { "horse", "horses" },
