@@ -67,7 +67,7 @@ else
     {
         @if (records.ContainsKey(item.Name))
         {
-            <BSCard Color="Color.Info" Class="m-2">
+            <BSCard Color="Color.Dark" Class="m-2">
                 <BSCard CardType="CardType.Header">@records[item.Name].Type</BSCard>
                 <BSCard CardType="CardType.Body">
                     <BSCard CardType="CardType.Title">@item.Name</BSCard>
@@ -82,7 +82,7 @@ else
         }
         else
         {
-            <BSCard Color="Color.Info" Class="m-2">
+            <BSCard Color="Color.Dark" Class="m-2">
                 <BSCard CardType="CardType.Header">General</BSCard>
                 <BSCard CardType="CardType.Body">
                     <BSCard CardType="CardType.Title">@item.Name</BSCard>
