@@ -1,23 +1,11 @@
 ﻿@page "/"
-
+<!--Title-->
 <h1 class="text-center">Smart Photo</h1>
 
-<h3 class="text-center">How it works</h3>
-
-<p class="text-center">The program will detect the various objects present in a photo.</p>
-
-<ul class="text-center">
-    <li class="text-center">Upload your photo.</li>
-    <li class="text-center">The network runs its magic.</li>
-    <li class="text-center">Various objects are identified.</li>
-</ul>
-
-<img src="/images/architecture.png" class="mx-auto d-block img-fluid" />
-
-<p class="text-center">In particular, the following four kinds of animals are further identified for their species: 1) Cats, 2) Dogs, 3) Horses, 4) Flowers.</p>
-
+<!--Section-->
 <h3 class="text-center">Start</h3>
 
+<!--Usage Instruction-->
 @if (!Directory.Exists(workPath) || process != null)
 {
     <p class="text-center">Select a photo to start detecting objects in it.</p>
@@ -27,7 +15,7 @@ else
     <p class="text-center"><strong>Someone is working with this site right now!</strong> Due to limited processing resource. Only one person can use this app at a time. Please come back later!</p>
 }
 
-
+<!--Image Upload Control-->
 @if (process == null)
 {
     @if (file != null)
@@ -64,11 +52,13 @@ else
 }
 else
 {
+    <!--Process Output Log-->
     <pre style="white-space: pre-wrap;">
         @process
     </pre>
 }
 
+<!--Items Cards-->
 @if (items != null)
 {
     foreach (var item in items)
@@ -79,15 +69,29 @@ else
                 <BSCard CardType="CardType.Header">@records[item.Name].Type</BSCard>
                 <BSCard CardType="CardType.Body">
                     <BSCard CardType="CardType.Title">@item.Name</BSCard>
-                    <img class="img-fluid" src="temp/@Path.GetFileName(item.FilePath)" />
-                    <BSCard CardType="CardType.Text">@records[item.Name].Summary</BSCard>
+                    <BSCard CardType="CardType.Text">
+                        <div class="clearfix">
+                            <img class="img-fluid float-left mr-2" src="temp/@Path.GetFileName(item.FilePath)" />
+                            @records[item.Name].Summary
+                        </div>
+                    </BSCard>
                 </BSCard>
             </BSCard>
         }
         else
         {
-            <img class="img-fluid" src="temp/@Path.GetFileName(item.FilePath)" />
-            <p>@item.Name is detected (but we don't have a dictionary item for it). </p>
+            <BSCard>
+                <BSCard CardType="CardType.Header">General</BSCard>
+                <BSCard CardType="CardType.Body">
+                    <BSCard CardType="CardType.Title">@item.Name</BSCard>
+                    <BSCard CardType="CardType.Text">
+                        <div class="clearfix">
+                            <img class="img-fluid float-left mr-2" src="temp/@Path.GetFileName(item.FilePath)" />
+                            <p>@item.Name is detected (but we don't have a dictionary item for it). </p>
+                        </div>
+                    </BSCard>
+                </BSCard>
+            </BSCard>
         }
     }
 }
@@ -99,6 +103,7 @@ else
     string process = null;
     string TaskItem = null;
     string rootPath = null;
+    string quote = null;
     string workPath = null;
     (string FilePath, string Name)[] items = null;
     Dictionary<string, Kind> records = null;
@@ -109,10 +114,19 @@ else
         file = files.FirstOrDefault();
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         rootPath = Path.GetDirectoryName(Directory.GetCurrentDirectory());
         workPath = Path.Combine(rootPath, "work");
+
+        // Get a quote
+        using var client = new HttpClient();
+        var result = await client.GetAsync("https://quotes.rest/qod?language=en");
+        if (result.IsSuccessStatusCode)
+        {
+            string content = await result.Content.ReadAsStringAsync();
+            quote = System.Text.RegularExpressions.Regex.Match(content, "\"quote\": \"(.*)?\"").Groups[1].Value;
+        }
     }
 
     async Task Save()
@@ -129,15 +143,23 @@ else
             System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(memory);
             bitmap.Save(TaskItem, System.Drawing.Imaging.ImageFormat.Png);
         }
-        process = "Start processing...";
+        process = "Start processing (This may took a LONG while)...";
+        if (quote != null)
+            process += $" In the mean time, did you know that: {quote}";
         StateHasChanged();
-        // Perform identifications
+        // Perform Object Detection
         bool result = await YoloStage();
-        if(result)
+        StateHasChanged();
+        // Continue Species Identification
+        if (result)
         {
+            // Move work files to appropriate places
             TextInfo TI = new CultureInfo("en-US", false).TextInfo;
             // Get files
-            items = Directory.GetFiles(workPath).Where(f => Path.GetFileName(f) != "work.png").Select(f => (FilePath: f, Name: TI.ToTitleCase(Path.GetFileNameWithoutExtension(f)))).ToArray();
+            items = Directory.GetFiles(workPath)
+                .Where(f => Path.GetFileName(f).ToLower() != "work.png")
+                .Select(f => (FilePath: f, Name: TI.ToTitleCase(Path.GetFileNameWithoutExtension(f)))).ToArray();
+            items.Select(i => i.Name = i.Name.Substring(0, i.Name.LastIndexOf('_'))).ToArray(); // Remove index
             // Copy files into wwwroot
             string tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "temp");
             if (Directory.Exists(tempFolder))
@@ -148,22 +170,36 @@ else
                 string newPath = Path.Combine(tempFolder, Path.GetFileName(f.FilePath));
                 File.Copy(f.FilePath, newPath);
             });
+            // Update edictionary
+            if (result)
+            {
+                // Get dictionary
+                string csvFile = Path.Combine(rootPath, "dataset.csv");
+                var conf = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture);
+                using (var reader = new StreamReader(csvFile))
+                using (var csv = new CsvHelper.CsvReader(reader, conf))
+                {
+                    records = csv.GetRecords<Kind>().ToDictionary(i => i.Species, i => i);
+                }
+            }
+            StateHasChanged();
 
             // Perform further identifications
+            string[] yoloObjects = new string[] { "cat", "dog", "horse", "flower", "pottedplant" };
+            Dictionary<string, string> annSubjects = new Dictionary<string, string>()
+            {
+                { "cat", "cats_and_dogs" }, // "cats" weight is not ready yet, use cats_and_dogs for now
+                { "dog", "cats_and_dogs" },
+                { "horse", "horses" },
+                { "flower", "flowers" },
+                { "pottedplant", "flowers"}
+            };
             for (int i = 0; i < items.Length; i++)
             {
                 var item = items[i];
-                string[] objects = new string[] { "cat", "dog", "horse", "flower" };
-                if (objects.Contains(item.Name.ToLower()))
+                if (yoloObjects.Contains(item.Name.ToLower()))
                 {
-                    Dictionary<string, string> subjects = new Dictionary<string, string>()
-                    {
-                        { "cat", "cats" },
-                        { "dog", "cats_and_dogs" },
-                        { "horse", "horses" },
-                        { "flower", "flowers" }
-                    };
-                    string identification = await ANNStage(subjects[item.Name.ToLower()], item.FilePath);
+                    string identification = await ANNStage(annSubjects[item.Name.ToLower()], item.FilePath);
                     if (identification != null)
                     {
                         items[i].Name = identification;
@@ -171,18 +207,7 @@ else
                 }
             }
         }
-        // Update edictionary
-        if(result)
-        {
-            // Get dictionary
-            string csvFile = Path.Combine(rootPath, "dataset.csv");
-            var conf = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture);
-            using (var reader = new StreamReader(csvFile))
-            using (var csv = new CsvHelper.CsvReader(reader, conf))
-            {
-                records = csv.GetRecords<Kind>().ToDictionary(i => i.Species, i => i);
-            }
-        }
+        StateHasChanged();
         // Delete holding
         Directory.Delete(workPath, true);
     }
