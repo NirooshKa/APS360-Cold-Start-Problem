@@ -112,9 +112,9 @@ else
             <li>@item.Key: @item.Value.Type, @item.Value.Species, @item.Value.Summary</li>
         }
     </ul>
+    *@
 
     <BSButton Color="Color.Primary" @onclick="() => uriHelper.NavigateTo(uriHelper.Uri, forceLoad: true)">Do It Again!</BSButton>
-    *@
 }
 
 @code {
@@ -208,12 +208,14 @@ else
                     records = csv.GetRecords<Kind>().ToDictionary(i => i.Species, i => i);
                 }
             }
+            process += $"\nStage 1 complete.";
+            process += $"\nStarting stage 2...";
             StateHasChanged();
 
             // Perform further identifications
             string[] yoloObjects = new string[] { "cat", "dog", "horse", "flower", "pottedplant" };
             Dictionary<string, string> annSubjects = new Dictionary<string, string>()
-{
+            {
                 { "cat", "cats_and_dogs" }, // "cats" weight is not ready yet, use cats_and_dogs for now
                 { "dog", "cats_and_dogs" },
                 { "horse", "horses" },
@@ -232,7 +234,9 @@ else
                     }
                 }
             }
+            process += $"\nStage 2 complete.";
         }
+        process += $"\nAll stages are complete.";
         StateHasChanged();
         // Delete holding
         Directory.Delete(workPath, true);
@@ -263,7 +267,7 @@ else
             }
             else
             {
-                process += "\n" + result.StandardOutput;
+                process += "\n" + result.StandardOutput.Replace(System.IO.Directory.GetCurrentDirectory(), "Current Workding Directory" + System.IO.Path.PathSeparator).TrimEnd();
                 return true;
             }
         }
@@ -295,7 +299,7 @@ else
             }
             else
             {
-                process += "\n" + result.StandardOutput;
+                process += "\n" + result.StandardOutput.Trim();
                 return result.StandardOutput.Trim();
             }
         }
