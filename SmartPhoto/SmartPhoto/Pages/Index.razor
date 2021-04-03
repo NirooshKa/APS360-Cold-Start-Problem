@@ -166,7 +166,7 @@ else
         }
         process = "Start processing (This may take a LONG while)...";
         if (quote != null && quote.Quote != null)
-            process += $" In the mean time, did you know that: {quote.Quote} - {quote.Author}";
+            process += $" In the mean time, did you know that: \"{quote.Quote}\" - {quote.Author}";
         StateHasChanged();
         // Perform Object Detection
         bool result = await YoloStage();
